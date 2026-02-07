@@ -1,7 +1,7 @@
 {
-  "name": "Baan Namsai Bikes",
-  "short_name": "Bikes",
-  "description": "Bike fleet management tracker",
+  "name": "Vehicle Check",
+  "short_name": "Vehicle Check",
+  "description": "Vehicle Check management tracker",
   "start_url": "./",
   "display": "standalone",
   "background_color": "#f2f2f2",

@@ -509,18 +509,24 @@ function loadUserVehicles(userId) {
           userId: data.userId
         });
       });
-      // Sort by soonest expiry (tax or insurance)
+      // Sort so that expired vehicles are always at the top, then by soonest expiry (tax or insurance)
       vehicles.sort((a, b) => {
-        // Get soonest expiry for each vehicle
-        function soonestExpiry(v) {
+        function getStatusAndSoonest(v) {
           const tax = daysLeft(v.taxExpiry);
           const ins = daysLeft(v.insuranceExpiry);
-          // Only consider future or today expiries, ignore nulls
-          const valid = [tax, ins].filter(x => x !== null && x >= 0);
-          if (valid.length === 0) return Number.POSITIVE_INFINITY;
-          return Math.min(...valid);
+          // Expired if either is expired
+          const isExpired = [tax, ins].some(x => x !== null && x < 0);
+          // Next renewal (can be negative if expired)
+          const soonest = [tax, ins].filter(x => x !== null).sort((x, y) => x - y)[0];
+          return { isExpired, soonest: soonest === undefined ? Number.POSITIVE_INFINITY : soonest };
         }
-        return soonestExpiry(a) - soonestExpiry(b);
+        const aStatus = getStatusAndSoonest(a);
+        const bStatus = getStatusAndSoonest(b);
+        // Expired vehicles always come first
+        if (aStatus.isExpired && !bStatus.isExpired) return -1;
+        if (!aStatus.isExpired && bStatus.isExpired) return 1;
+        // Otherwise, sort by soonest renewal (expired vehicles will be sorted by how overdue they are)
+        return aStatus.soonest - bStatus.soonest;
       });
       renderAll();
     }, err => {
